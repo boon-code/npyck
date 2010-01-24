@@ -40,7 +40,7 @@ def main(main_file, src_files, dest = 'packout.zip'):
 	df.write("#!/bin/sh\n\n")
 	df.write('python -c"import sys\n')
 	df.write("import runpy\n\n")
-	df.write("sys.argv = sys.argv[1:]\n")
+	df.write("sys.argv[0] = '$0'\n")
 	df.write("sys.path.insert(0, '$0')\n")
 	df.write("result = runpy.run_module('" + 
 		os.path.splitext(os.path.basename(main_file))[0] +

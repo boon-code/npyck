@@ -1,9 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys
 import os
+import stat
 import zipfile
 import tempfile
+import optparse
 
 READ_SIZE = 1000
 
@@ -17,7 +20,14 @@ def read2mem(file_obj):
 	
 	return "".join(data)
 
-def main(main_file, src_files, dest = 'packout.zip'):
+def read_pydir(dir):
+	
+	dir_list = os.listdir(dir)
+	for i in dir_list:
+		if i.endswith(".py"):
+			yield i
+
+def pack(main_file, src_files, dstream = sys.stdout):
 	
 	os_handle, zip_path = tempfile.mkstemp()
 	os.close(os_handle)
@@ -36,25 +46,53 @@ def main(main_file, src_files, dest = 'packout.zip'):
 	
 	os.remove(zip_path)
 	
-	df = open(dest, 'w')
-	df.write("#!/bin/sh\n\n")
-	df.write('python -c"import sys\n')
-	df.write("import runpy\n\n")
-	df.write("sys.argv[0] = '$0'\n")
-	df.write("sys.path.insert(0, '$0')\n")
-	df.write("result = runpy.run_module('" + 
+	dstream.write("#!/bin/sh\n\n")
+	dstream.write('python -c"import sys\n')
+	dstream.write("import runpy\n\n")
+	dstream.write("sys.argv[0] = '$0'\n")
+	dstream.write("sys.path.insert(0, '$0')\n")
+	dstream.write("result = runpy.run_module('" + 
 		os.path.splitext(os.path.basename(main_file))[0] +
 		"', run_name = '__main__')")
-	df.write('" $*\n')
-	df.write("exit\n\n")
-	df.write(data)
+	dstream.write('" $*\n')
+	dstream.write("exit\n\n")
+	dstream.write(data)
 	
-	df.close()
+	dstream.close()
+
+
+def main():
+	
+	parser = optparse.OptionParser(
+		usage = "usage: %prog [options] main-file [other source files]"
+	)
+	
+	parser.add_option("-o", "--output", dest = "filename",
+		help = "write output to file")
+	
+	parser.add_option("-a", "--all", action = "store_true",
+		dest = "all", help = "add all source files in directory")
+	
+	parser.set_defaults(all = False)
+	
+	options, args = parser.parse_args()
+	
+	if len(args) < 1:
+		parser.print_help(file = sys.stderr)
+		return
+	else:
+		mainfile = args[0]
+	
+	if options.all:
+		args = read_pydir(".")
+	
+	if options.filename:
+		f = open(options.filename, 'w')
+		os.chmod(options.filename, 0764)
+		pack(mainfile, args, dstream = f)
+	else:
+		pack(mainfile, args)
+
 
 if __name__ == '__main__':
-	if len(sys.argv) > 2:
-		# just add the main file to the packet, who cares...
-		main(sys.argv[1], sys.argv[1:])
-	else:
-		print "npyck [main-filename] [other files]"
-
+	main()

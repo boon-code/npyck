@@ -106,7 +106,7 @@ def main():
     parser.add_option("-a", "--all", action = "store_true",
         dest = "all", help = "add all source files in directory")
     
-    parser.add_option("-n", "--new_globals", action = "store_false",
+    parser.add_option("-n", "--no_globals", action = "store_false",
         dest = "use_globals", help = "doesn't include " +
         "globals from loader, which means NPYCK_ will NOT be set")
     

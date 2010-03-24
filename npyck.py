@@ -27,7 +27,7 @@ def read_pydir(dir):
 		if i.endswith(".py"):
 			yield i
 
-def pack(main_file, src_files, dstream = sys.stdout):
+def pack(main_file, src_files, dstream = sys.stdout, use_globals = True):
 	
 	os_handle, zip_path = tempfile.mkstemp()
 	os.close(os_handle)
@@ -46,14 +46,50 @@ def pack(main_file, src_files, dstream = sys.stdout):
 	
 	os.remove(zip_path)
 	
-	dstream.write("#!/bin/sh\n\n")
-	dstream.write('python -c"import sys\n')
-	dstream.write("import runpy\n\n")
-	dstream.write("sys.argv[0] = '$0'\n")
-	dstream.write("sys.path.insert(0, '$0')\n")
-	dstream.write("result = runpy.run_module('" + 
-		os.path.splitext(os.path.basename(main_file))[0] +
-		"', run_name = '__main__', alter_sys = True)")
+	dstream.write(
+"""#!/bin/sh
+
+python -c"import sys
+import runpy
+
+class npyck_class(object):
+	
+	def __init__(self):
+		
+		self.path = '$0'
+	
+	def read(self, filename, max_size = None):
+		import zipfile
+		z = zipfile.ZipFile('$0', 'r')
+		
+		if filename in z.namelist():
+			f = z.open(filename, 'r')
+			buffer = f.read(max_size)
+			f.close()
+			z.close()
+			
+			return (True, buffer)
+			
+		z.close()
+		return (False, '')
+
+npyck_ = npyck_class()
+g_ = {'NPYCK_' : npyck_}
+sys.argv[0] = '$0'
+sys.path.insert(0, '$0')
+""")
+
+	if use_globals:
+		dstream.write("result = runpy.run_module('" + 
+			os.path.splitext(os.path.basename(main_file))[0] +
+			"', run_name = '__main__', " +
+			"alter_sys = True, init_globals = g_)")
+	else:
+		dstream.write("result = runpy.run_module('" + 
+			os.path.splitext(os.path.basename(main_file))[0] +
+			"', run_name = '__main__', " +
+			"alter_sys = True)")
+	
 	dstream.write('" $*\n')
 	dstream.write("exit\n\n")
 	dstream.write(data)
@@ -73,7 +109,11 @@ def main():
 	parser.add_option("-a", "--all", action = "store_true",
 		dest = "all", help = "add all source files in directory")
 	
-	parser.set_defaults(all = False)
+	parser.add_option("-n", "--new_globals", action = "store_false",
+		dest = "use_globals", help = "doesn't include " +
+		"globals from loader, which means NPYCK_ will NOT be set")
+	
+	parser.set_defaults(all = False, use_globals = True)
 	
 	options, args = parser.parse_args()
 	
@@ -89,9 +129,11 @@ def main():
 	if options.filename:
 		f = open(options.filename, 'w')
 		os.chmod(options.filename, 0764)
-		pack(mainfile, args, dstream = f)
+		
+		pack(mainfile, args, dstream = f, 
+			use_globals = options.use_globals)
 	else:
-		pack(mainfile, args)
+		pack(mainfile, args, use_globals = options.use_globals)
 
 
 if __name__ == '__main__':

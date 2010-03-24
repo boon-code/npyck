@@ -8,12 +8,14 @@ import zipfile
 import tempfile
 import optparse
 
+VERSION = "0.0.2"
+
 class npyck_class(object):
     
     def __init__(self, path):
         
         self.path = path
-        self.version = "0.0.1"
+        self.version = VERSION
     
     def read(self, filename, max_size = None):
         import zipfile

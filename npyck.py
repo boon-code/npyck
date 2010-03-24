@@ -10,6 +10,44 @@ import optparse
 
 READ_SIZE = 1000
 
+class npyck_class(object):
+	
+	def __init__(self, path):
+		
+		self.path = path
+		self.version = "0.0.1"
+	
+	def read(self, filename, max_size = None):
+		import zipfile
+		z = zipfile.ZipFile(self.path, 'r')
+		
+		if filename in z.namelist():
+			f = z.open(filename, 'r')
+			buffer = f.read(max_size)
+			f.close()
+			z.close()
+			
+			return (True, buffer)
+			
+		z.close()
+		return (False, '')
+
+def load_pack(main_file, path, use_globals = True):
+	
+	import sys
+	import runpy
+	
+	sys.argv[0] = path
+	sys.path.insert(0, path)
+	
+	if use_globals:
+		g_ = {'NPYCK_' : npyck_class(path)}
+	else:
+		g_ = {}
+		
+	result = runpy.run_module(main_file, run_name = '__main__', 
+		alter_sys = True, init_globals = g_)
+
 def read2mem(file_obj):
 	
 	data = []
@@ -38,6 +76,10 @@ def pack(main_file, src_files, dstream = sys.stdout, use_globals = True):
 		arc = os.path.split(pyfile)
 		zf.write(pyfile, arc[1])
 	
+	npy_file = open(sys.argv[0])
+	zf.writestr("npyck.py", read2mem(npy_file))
+	npy_file.close()
+	
 	zf.close()
 	
 	zf = open(zip_path, 'r')
@@ -46,49 +88,15 @@ def pack(main_file, src_files, dstream = sys.stdout, use_globals = True):
 	
 	os.remove(zip_path)
 	
-	dstream.write(
-"""#!/bin/sh
-
-python -c"import sys
-import runpy
-
-class npyck_class(object):
+	dstream.write('#!/bin/sh\n')
+	dstream.write('python -c"import npyck;')
 	
-	def __init__(self):
-		
-		self.path = '$0'
-	
-	def read(self, filename, max_size = None):
-		import zipfile
-		z = zipfile.ZipFile('$0', 'r')
-		
-		if filename in z.namelist():
-			f = z.open(filename, 'r')
-			buffer = f.read(max_size)
-			f.close()
-			z.close()
-			
-			return (True, buffer)
-			
-		z.close()
-		return (False, '')
-
-npyck_ = npyck_class()
-g_ = {'NPYCK_' : npyck_}
-sys.argv[0] = '$0'
-sys.path.insert(0, '$0')
-""")
-
 	if use_globals:
-		dstream.write("result = runpy.run_module('" + 
-			os.path.splitext(os.path.basename(main_file))[0] +
-			"', run_name = '__main__', " +
-			"alter_sys = True, init_globals = g_)")
+		dstream.write("npyck.load_pack('%s', '$0', use_globals = True)"
+		 % os.path.splitext(os.path.basename(main_file))[0])
 	else:
-		dstream.write("result = runpy.run_module('" + 
-			os.path.splitext(os.path.basename(main_file))[0] +
-			"', run_name = '__main__', " +
-			"alter_sys = True)")
+		dstream.write("npyck.load_pack('%s', '$0', use_globals = False)"
+		 % os.path.splitext(os.path.basename(main_file))[0])
 	
 	dstream.write('" $*\n')
 	dstream.write("exit\n\n")

@@ -53,7 +53,7 @@ def pack(main_file, src_files, dstream = sys.stdout):
 	dstream.write("sys.path.insert(0, '$0')\n")
 	dstream.write("result = runpy.run_module('" + 
 		os.path.splitext(os.path.basename(main_file))[0] +
-		"', run_name = '__main__')")
+		"', run_name = '__main__', alter_sys = True)")
 	dstream.write('" $*\n')
 	dstream.write("exit\n\n")
 	dstream.write(data)

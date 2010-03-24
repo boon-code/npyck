@@ -8,8 +8,6 @@ import zipfile
 import tempfile
 import optparse
 
-READ_SIZE = 1000
-
 class npyck_class(object):
     
     def __init__(self, path):
@@ -34,11 +32,7 @@ class npyck_class(object):
 
 def load_pack(main_file, path, use_globals = True):
     
-    import sys
     import runpy
-    
-    sys.argv[0] = path
-    sys.path.insert(0, path)
     
     if use_globals:
         g_ = {'NPYCK_' : npyck_class(path)}
@@ -47,16 +41,6 @@ def load_pack(main_file, path, use_globals = True):
         
     result = runpy.run_module(main_file, run_name = '__main__', 
         alter_sys = True, init_globals = g_)
-
-def read2mem(file_obj):
-    
-    data = []
-    rb = file_obj.read(READ_SIZE)
-    while rb != '':
-        data.append(rb)
-        rb = file_obj.read(READ_SIZE)
-    
-    return "".join(data)
 
 def read_pydir(dir):
     
@@ -77,19 +61,22 @@ def pack(main_file, src_files, dstream = sys.stdout, use_globals = True):
         zf.write(pyfile, arc[1])
     
     npy_file = open(sys.argv[0])
-    zf.writestr("npyck.py", read2mem(npy_file))
+    zf.writestr("npyck.py", npy_file.read())
     npy_file.close()
     
     zf.close()
     
     zf = open(zip_path, 'r')
-    data = read2mem(zf)
+    data = zf.read()
     zf.close()
     
     os.remove(zip_path)
     
     dstream.write('#!/bin/sh\n')
-    dstream.write('python -c"import npyck;')
+    dstream.write('python -c"import sys;')
+    dstream.write("sys.argv[0] = '$0';")
+    dstream.write("sys.path.insert(0, '$0');")
+    dstream.write("import npyck;")
     
     if use_globals:
         dstream.write("npyck.load_pack('%s', '$0', use_globals = True)"

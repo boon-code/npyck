@@ -22,29 +22,28 @@ class npyck_class(object):
         self._list = []
     
     def open(self, filename):
-    	
-    	if not self._open:
-        	self._z = zipfile.ZipFile(self.path, 'r')
+        
+        if not self._open:
+            self._z = zipfile.ZipFile(self.path, 'r')
         
         if filename in self._z.namelist():
-            f = z.open(filename, 'r')
+            f = self._z.open(filename, 'r')
             self._list.append(f)
             return f
         else:
-        	return None
+            return None
     
-    def closeall(self):
-    	
-        for i in self._list:
-    	    if not i.closed:
-    	        i.close()
-    	
-        self._z.close()
-    
-    def __del__(self):
+    def close(self):
         
-        self.closeall()
-
+        for i in self._list:
+            if i.closed:
+                self._list.remove(i)
+            else:
+                i.close()
+            
+        
+        if not self._z is None:
+            self._z.close()
 
 def load_pack(main_file, path, use_globals = True):
     

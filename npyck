@@ -7,8 +7,9 @@ import stat
 import zipfile
 import tempfile
 import optparse
+import zipfile
 
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 
 class npyck_class(object):
     
@@ -16,21 +17,34 @@ class npyck_class(object):
         
         self.path = path
         self.version = VERSION
+        self._open = False
+        self._z = None
+        self._list = []
     
-    def read(self, filename, max_size = None):
-        import zipfile
-        z = zipfile.ZipFile(self.path, 'r')
+    def open(self, filename):
+    	
+    	if not self._open:
+        	self._z = zipfile.ZipFile(self.path, 'r')
         
-        if filename in z.namelist():
+        if filename in self._z.namelist():
             f = z.open(filename, 'r')
-            buffer = f.read(max_size)
-            f.close()
-            z.close()
-            
-            return (True, buffer)
-            
-        z.close()
-        return (False, '')
+            self._list.append(f)
+            return f
+        else:
+        	return None
+    
+    def closeall(self):
+    	
+        for i in self._list:
+    	    if not i.closed:
+    	        i.close()
+    	
+        self._z.close()
+    
+    def __del__(self):
+        
+        self.closeall()
+
 
 def load_pack(main_file, path, use_globals = True):
     

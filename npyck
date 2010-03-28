@@ -17,30 +17,21 @@ class npyck_class(object):
         
         self.path = path
         self.version = VERSION
-        self._open = False
         self._z = None
-        self._list = []
     
-    def open(self, filename):
-        
-        if not self._open:
-            self._z = zipfile.ZipFile(self.path, 'r')
-        
-        if filename in self._z.namelist():
-            f = self._z.open(filename, 'r')
-            self._list.append(f)
-            return f
-        else:
-            return None
+    def read(self, filename):
+    	
+    	if self._z is None:
+    		self._z = zipfile.ZipFile(self.path, 'r')
+    	
+    	try:
+    		data = self._z.read(filename)
+    		return data
+    	except:
+    		return None
+    	
     
     def close(self):
-        
-        for i in self._list:
-            if i.closed:
-                self._list.remove(i)
-            else:
-                i.close()
-            
         
         if not self._z is None:
             self._z.close()

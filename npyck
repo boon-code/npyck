@@ -7,7 +7,6 @@ import stat
 import zipfile
 import tempfile
 import optparse
-import zipfile
 
 VERSION = "0.0.4"
 

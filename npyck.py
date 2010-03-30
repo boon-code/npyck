@@ -7,52 +7,77 @@ import stat
 import zipfile
 import tempfile
 import optparse
+import fnmatch
 
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 
-class npyck_class(object):
+class NpyckUtil(object):
     
-    def __init__(self, path):
+    def __init__(self, zippath):
         
-        self.path = path
+        self.path = zippath
         self.version = VERSION
         self._z = None
     
-    def read(self, filename):
+    def ne_read(self, filename):
+    	"""No exception read...
+    	
+    	Returns None on any error (except if there is an error while
+    	opening the zip archive, which would be a real bad error),
+    	on success it returns the opened file's content.
+    	"""
     	
     	if self._z is None:
     		self._z = zipfile.ZipFile(self.path, 'r')
     	
-    	try:
-    		data = self._z.read(filename)
-    		return data
-    	except:
+    	if not (filename in self._z.namelist()):
     		return None
     	
+    	try:
+    		return self._z.read(filename)
+    	except:
+    		return None
+    
+    def read(self, filename):
+    	"""Normal read...
+    	
+    	Returns content of given file, if the file doesn't exist
+    	there will be an exception.
+    	"""
+    	
+    	if self._z is None:
+    		self._z = zipfile.ZipFile(self.path, 'r')
+    	
+    	return self._z.read(filename)
+    
     
     def close(self):
+        "Closes zip file..."
         
         if not self._z is None:
             self._z.close()
+            self._z = None
+    
+    def __del__(self):
+    	
+    	self.close()
+
 
 def load_pack(main_file, path, use_globals = True):
     
     import runpy
     
     if use_globals:
-        g_ = {'NPYCK_' : npyck_class(path)}
+        environment = {'NPYCK_' : NpyckUtil(path)}
     else:
-        g_ = {}
+        environment = {}
         
     result = runpy.run_module(main_file, run_name = '__main__', 
-        alter_sys = True, init_globals = g_)
+        alter_sys = True, init_globals = environment)
 
-def read_pydir(dir):
-    
-    dir_list = os.listdir(dir)
-    for i in dir_list:
-        if i.endswith(".py"):
-            yield i
+def read_pydir(dirname):
+	
+    return fnmatch.filter(os.listdir(dirname), '*.py')
 
 def pack(main_file, src_files, dstream = sys.stdout, use_globals = True):
     

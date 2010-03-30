@@ -20,35 +20,35 @@ class NpyckUtil(object):
         self._z = None
     
     def ne_read(self, filename):
-    	"""No exception read...
-    	
-    	Returns None on any error (except if there is an error while
-    	opening the zip archive, which would be a real bad error),
-    	on success it returns the opened file's content.
-    	"""
-    	
-    	if self._z is None:
-    		self._z = zipfile.ZipFile(self.path, 'r')
-    	
-    	if not (filename in self._z.namelist()):
-    		return None
-    	
-    	try:
-    		return self._z.read(filename)
-    	except:
-    		return None
+        """No exception read...
+        
+        Returns None on any error (except if there is an error while
+        opening the zip archive, which would be a real bad error),
+        on success it returns the opened file's content.
+        """
+        
+        if self._z is None:
+            self._z = zipfile.ZipFile(self.path, 'r')
+        
+        if not (filename in self._z.namelist()):
+            return None
+        
+        try:
+            return self._z.read(filename)
+        except:
+            return None
     
     def read(self, filename):
-    	"""Normal read...
-    	
-    	Returns content of given file, if the file doesn't exist
-    	there will be an exception.
-    	"""
-    	
-    	if self._z is None:
-    		self._z = zipfile.ZipFile(self.path, 'r')
-    	
-    	return self._z.read(filename)
+        """Normal read...
+        
+        Returns content of given file, if the file doesn't exist
+        there will be an exception.
+        """
+        
+        if self._z is None:
+            self._z = zipfile.ZipFile(self.path, 'r')
+        
+        return self._z.read(filename)
     
     
     def close(self):
@@ -59,8 +59,8 @@ class NpyckUtil(object):
             self._z = None
     
     def __del__(self):
-    	
-    	self.close()
+        
+        self.close()
 
 
 def load_pack(main_file, path, use_globals = True):
@@ -76,7 +76,7 @@ def load_pack(main_file, path, use_globals = True):
         alter_sys = True, init_globals = environment)
 
 def read_pydir(dirname):
-	
+    
     return fnmatch.filter(os.listdir(dirname), '*.py')
 
 def pack(main_file, src_files, dstream = sys.stdout, use_globals = True):
@@ -139,15 +139,15 @@ def main():
         "globals from loader, which means NPYCK_ will NOT be set")
     
     parser.add_option("-V", "--version", action = "store_true",
-    	dest = "version", help = "shows version number only...")
+        dest = "version", help = "shows version number only...")
     
     parser.set_defaults(all = False, use_globals = True, version = False)
     
     options, args = parser.parse_args()
     
     if options.version:
-    	sys.stderr.write("npyck version %s\n" % VERSION)
-    	return
+        sys.stderr.write("npyck version %s\n" % VERSION)
+        return
     
     if len(args) < 1:
         parser.print_help(file = sys.stderr)

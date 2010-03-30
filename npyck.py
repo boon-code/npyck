@@ -146,7 +146,7 @@ def main():
     options, args = parser.parse_args()
     
     if options.version:
-        sys.stderr.write("npyck version %s\n" % VERSION)
+        print("npyck version %s" % VERSION)
         return
     
     if len(args) < 1:

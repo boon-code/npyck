@@ -1,0 +1,11 @@
+npyck creates a shell skript which loads a python project...
+all python source files are appended to the shell skript 
+in a compressed zip file.
+
+it's easy to use:
+let's say we got 2 source files, main.py and other.py
+just call ./npyck.py main.py other.py -o packet.sh
+
+now ./packet.sh *  should have the same effects as python main.py *
+
+supports only unix like operating systems, (it would work on windows if you had a shell...)

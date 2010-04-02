@@ -11,13 +11,13 @@ import fnmatch
 
 VERSION = "0.0.5"
 
+
 class NpyckUtil(object):
     
-    def __init__(self, zippath):
+    def __init__(self, zip_path):
         
-        self.path = zippath
+        self.path = zip_path
         self.version = VERSION
-        self._z = None
     
     def ne_read(self, filename):
         """No exception read...
@@ -27,16 +27,17 @@ class NpyckUtil(object):
         on success it returns the opened file's content.
         """
         
-        if self._z is None:
-            self._z = zipfile.ZipFile(self.path, 'r')
-        
-        if not (filename in self._z.namelist()):
-            return None
-        
+        zip = zipfile.ZipFile(self.path, 'r')
         try:
-            return self._z.read(filename)
-        except:
-            return None
+			value = zip.read(filename)
+		except (KeyboardInterrupt,SystemExit), ex:
+			raise ex
+		except:
+			return None
+		finally:
+			zip.close()
+		else:
+			return value
     
     def read(self, filename):
         """Normal read...
@@ -45,22 +46,13 @@ class NpyckUtil(object):
         there will be an exception.
         """
         
-        if self._z is None:
-            self._z = zipfile.ZipFile(self.path, 'r')
-        
-        return self._z.read(filename)
-    
-    
-    def close(self):
-        "Closes zip file..."
-        
-        if not self._z is None:
-            self._z.close()
-            self._z = None
-    
-    def __del__(self):
-        
-        self.close()
+        zip = zipfile.ZipFile(self.path, 'r')
+        try:
+			value = zip.read(filename)
+		finally:
+			zip.close()
+		else:
+			return value
 
 
 def load_pack(main_file, path, use_globals = True):
@@ -72,14 +64,16 @@ def load_pack(main_file, path, use_globals = True):
     else:
         environment = {}
         
-    result = runpy.run_module(main_file, run_name = '__main__', 
-        alter_sys = True, init_globals = environment)
+    result = runpy.run_module(main_file, run_name='__main__', 
+        alter_sys=True, init_globals=environment)
+
 
 def read_pydir(dirname):
     
     return fnmatch.filter(os.listdir(dirname), '*.py')
 
-def pack(main_file, src_files, dstream = sys.stdout, use_globals = True):
+
+def pack(main_file, src_files, dstream=sys.stdout, use_globals=True):
     
     os_handle, zip_path = tempfile.mkstemp()
     os.close(os_handle)
@@ -90,10 +84,7 @@ def pack(main_file, src_files, dstream = sys.stdout, use_globals = True):
         arc = os.path.split(pyfile)
         zf.write(pyfile, arc[1])
     
-    npy_file = open(sys.argv[0])
-    zf.writestr("npyck.py", npy_file.read())
-    npy_file.close()
-    
+    zf.write(sys.argv[0], "npyck.py")
     zf.close()
     
     zf = open(zip_path, 'r')
@@ -109,10 +100,10 @@ def pack(main_file, src_files, dstream = sys.stdout, use_globals = True):
     dstream.write("import npyck;")
     
     if use_globals:
-        dstream.write("npyck.load_pack('%s', '$0', use_globals = True)"
+        dstream.write("npyck.load_pack('%s', '$0', use_globals=True)"
          % os.path.splitext(os.path.basename(main_file))[0])
     else:
-        dstream.write("npyck.load_pack('%s', '$0', use_globals = False)"
+        dstream.write("npyck.load_pack('%s', '$0', use_globals=False)"
          % os.path.splitext(os.path.basename(main_file))[0])
     
     dstream.write('" $*\n')
@@ -128,20 +119,20 @@ def main():
         usage = "usage: %prog [options] main-file [other source files]"
     )
     
-    parser.add_option("-o", "--output", dest = "filename",
-        help = "write output to file")
+    parser.add_option("-o", "--output", dest="filename",
+        help="write output to file")
     
-    parser.add_option("-a", "--all", action = "store_true",
-        dest = "all", help = "add all source files in directory")
+    parser.add_option("-a", "--all", action="store_true",
+        dest="all", help="add all source files in directory")
     
-    parser.add_option("-n", "--no_globals", action = "store_false",
-        dest = "use_globals", help = "doesn't include " +
+    parser.add_option("-n", "--no_globals", action="store_false",
+        dest="use_globals", help="doesn't include " +
         "globals from loader, which means NPYCK_ will NOT be set")
     
-    parser.add_option("-V", "--version", action = "store_true",
-        dest = "version", help = "shows version number only...")
+    parser.add_option("-V", "--version", action="store_true",
+        dest="version", help="shows version number only...")
     
-    parser.set_defaults(all = False, use_globals = True, version = False)
+    parser.set_defaults(all=False, use_globals=True, version=False)
     
     options, args = parser.parse_args()
     
@@ -150,7 +141,7 @@ def main():
         return
     
     if len(args) < 1:
-        parser.print_help(file = sys.stderr)
+        parser.print_help(file=sys.stderr)
         return
     else:
         mainfile = args[0]
@@ -162,10 +153,10 @@ def main():
         f = open(options.filename, 'w')
         os.chmod(options.filename, 0764)
         
-        pack(mainfile, args, dstream = f, 
-            use_globals = options.use_globals)
+        pack(mainfile, args, dstream=f, 
+            use_globals=options.use_globals)
     else:
-        pack(mainfile, args, use_globals = options.use_globals)
+        pack(mainfile, args, use_globals=options.use_globals)
 
 
 if __name__ == '__main__':

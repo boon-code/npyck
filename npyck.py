@@ -9,7 +9,7 @@ import tempfile
 import optparse
 import fnmatch
 
-VERSION = "0.0.6"
+VERSION = "0.0.7"
 
 
 class NpyckUtil(object):
@@ -147,7 +147,7 @@ def main():
         mainfile = args[0]
     
     if options.all:
-        args = read_pydir(".")
+        args = frozenset(args).union(read_pydir("."))
     
     if options.filename:
         f = open(options.filename, 'w')

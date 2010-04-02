@@ -9,7 +9,7 @@ import tempfile
 import optparse
 import fnmatch
 
-VERSION = "0.0.5"
+VERSION = "0.0.6"
 
 
 class NpyckUtil(object):
@@ -26,18 +26,18 @@ class NpyckUtil(object):
         opening the zip archive, which would be a real bad error),
         on success it returns the opened file's content.
         """
-        
+        value = None
         zip = zipfile.ZipFile(self.path, 'r')
         try:
-			value = zip.read(filename)
-		except (KeyboardInterrupt,SystemExit), ex:
-			raise ex
-		except:
-			return None
-		finally:
-			zip.close()
-		else:
-			return value
+            value = zip.read(filename)
+        except (KeyboardInterrupt, SystemExit), ex:
+            raise ex
+        except:
+            return None
+        finally:
+            zip.close()
+        
+        return value
     
     def read(self, filename):
         """Normal read...
@@ -45,17 +45,17 @@ class NpyckUtil(object):
         Returns content of given file, if the file doesn't exist
         there will be an exception.
         """
-        
+        value = None
         zip = zipfile.ZipFile(self.path, 'r')
         try:
-			value = zip.read(filename)
-		finally:
-			zip.close()
-		else:
-			return value
+            value = zip.read(filename)
+        finally:
+            zip.close()
+        
+        return value
 
 
-def load_pack(main_file, path, use_globals = True):
+def load_pack(main_file, path, use_globals=True):
     
     import runpy
     

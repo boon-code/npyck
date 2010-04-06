@@ -9,7 +9,7 @@ import tempfile
 import optparse
 import fnmatch
 
-VERSION = "0.0.8"
+VERSION = "0.1.0"
 
 
 class NpyckUtil(object):
@@ -64,11 +64,15 @@ def load_pack(main_file, path, use_globals=True):
     else:
         environment = {}
     
-    sys.argv[0] = path
-        
-    result = runpy.run_module(main_file, run_name='__main__', 
-        alter_sys=True, init_globals=environment)
-
+    loader = runpy.get_loader(main_file)
+    if loader is None:
+        raise ImportError("No module named " + main_file)
+    code = loader.get_code(main_file)
+    if code is None:
+        raise ImportError("No code object available for " + main_file)
+    
+    return runpy._run_module_code(code, environment, '__main__',
+                            path, loader, True)
 
 def read_pydir(dirname):
     

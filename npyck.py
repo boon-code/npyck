@@ -9,7 +9,7 @@ import tempfile
 import optparse
 import fnmatch
 
-VERSION = "0.0.7"
+VERSION = "0.0.8"
 
 
 class NpyckUtil(object):

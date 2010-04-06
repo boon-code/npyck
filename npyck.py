@@ -63,6 +63,8 @@ def load_pack(main_file, path, use_globals=True):
         environment = {'NPYCK_' : NpyckUtil(path)}
     else:
         environment = {}
+    
+    sys.argv[0] = path
         
     result = runpy.run_module(main_file, run_name='__main__', 
         alter_sys=True, init_globals=environment)

@@ -146,8 +146,10 @@ def main():
     else:
         mainfile = args[0]
     
+    args = frozenset(args)
+    
     if options.all:
-        args = frozenset(args).union(read_pydir("."))
+        args = args.union(read_pydir("."))
     
     if options.filename:
         f = open(options.filename, 'w')

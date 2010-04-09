@@ -9,7 +9,7 @@ import tempfile
 import optparse
 import fnmatch
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 
 class NpyckUtil(object):
@@ -71,8 +71,17 @@ def load_pack(main_file, path, use_globals=True):
     if code is None:
         raise ImportError("No code object available for " + main_file)
     
-    return runpy._run_module_code(code, environment, '__main__',
+    if sys.version_info[0] == 2:
+        if sys.version_info[1] == 5:
+            return runpy._run_module_code(code, environment, '__main__',
                             path, loader, True)
+        elif sys.version_info[1] == 6:
+            return runpy._run_module_code(code, environment, '__main__',
+                            path, loader, '__main__')
+    
+    print "unsupported interpreter version..."
+    
+    
 
 def read_pydir(dirname):
     

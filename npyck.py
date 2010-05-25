@@ -131,7 +131,7 @@ def pack(main_file, src_files, dstream=sys.stdout, use_globals=True):
 def main():
     
     parser = optparse.OptionParser(
-        usage = "usage: %prog [options] main-file [other source files]"
+        usage="usage: %prog [options] main-file [other source files]"
     )
     
     parser.add_option("-o", "--output", dest="filename",

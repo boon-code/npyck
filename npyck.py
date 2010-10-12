@@ -9,7 +9,7 @@ import tempfile
 import optparse
 import fnmatch
 
-VERSION = "0.1.1"
+VERSION = "0.1.2b"
 
 
 class NpyckUtil(object):
@@ -88,7 +88,8 @@ def read_pydir(dirname):
     return fnmatch.filter(os.listdir(dirname), '*.py')
 
 
-def pack(main_file, src_files, dstream=sys.stdout, use_globals=True):
+def pack(main_file, src_files, dstream=sys.stdout, use_globals=True,
+    android=False):
     
     os_handle, zip_path = tempfile.mkstemp()
     os.close(os_handle)
@@ -107,8 +108,14 @@ def pack(main_file, src_files, dstream=sys.stdout, use_globals=True):
     zf.close()
     
     os.remove(zip_path)
+     dstream.write('#!/bin/sh\n')
+     
+    if android:
+        pypath = "/sdcard/com.googlecode.pythonforandroid/extras/python/"
+        dstream.write('export PYTHONPATH=%s\n' % pypath)
+        binpath = "/data/data/com.googlecode.pythonforandroid/files/python/bin"
+        dstream.write('export PATH="$PATH:%s"\n' % binpath)
     
-    dstream.write('#!/bin/sh\n')
     dstream.write('python -c"import sys;')
     dstream.write("sys.argv[0] = '$0';")
     dstream.write("sys.path.insert(0, '$0');")
@@ -147,7 +154,11 @@ def main():
     parser.add_option("-V", "--version", action="store_true",
         dest="version", help="shows version number only...")
     
-    parser.set_defaults(all=False, use_globals=True, version=False)
+    parser.add_option("-d", "--android", action="store_true",
+        dest="android", help="build bundle for android (dev-test)")
+    
+    parser.set_defaults(all=False, use_globals=True, version=False,
+        android=False)
     
     options, args = parser.parse_args()
     
@@ -171,9 +182,10 @@ def main():
         os.chmod(options.filename, 0764)
         
         pack(mainfile, args, dstream=f, 
-            use_globals=options.use_globals)
+            use_globals=options.use_globals, android=options.android)
     else:
-        pack(mainfile, args, use_globals=options.use_globals)
+        pack(mainfile, args, use_globals=options.use_globals,
+            android=options.android)
 
 
 if __name__ == '__main__':

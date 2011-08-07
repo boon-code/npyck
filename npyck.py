@@ -108,7 +108,7 @@ def pack(main_file, src_files, dstream=sys.stdout, use_globals=True,
     zf.close()
     
     os.remove(zip_path)
-     dstream.write('#!/bin/sh\n')
+    dstream.write('#!/bin/sh\n')
      
     if android:
         pypath = "/sdcard/com.googlecode.pythonforandroid/extras/python/"
